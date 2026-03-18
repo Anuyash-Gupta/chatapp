@@ -9,483 +9,702 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
 
   <style>
-    /* =========================================================
-       CSS RESET + VARIABLES
-    ========================================================= */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ============================================================
+     RESET + CSS VARIABLES
+  ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      /* Palette: off-white background, dark ink, single green accent */
-      --bg:         #f0ede8;
-      --surface:    #ffffff;
-      --border:     #d8d3cc;
-      --ink:        #1c1917;
-      --ink-mid:    #57534e;
-      --ink-light:  #a8a29e;
-      --accent:     #16a34a;      /* green */
-      --accent-dk:  #15803d;
-      --sent-bg:    #1c1917;      /* my messages: dark */
-      --sent-tx:    #f5f0eb;
-      --recv-bg:    #e7e2db;      /* their messages: warm grey */
-      --recv-tx:    #1c1917;
-      --danger:     #dc2626;
-      --radius-sm:  6px;
-      --radius-md:  12px;
-      --radius-lg:  20px;
-      --shadow:     0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
-      --font:       'IBM Plex Sans', sans-serif;
-      --mono:       'IBM Plex Mono', monospace;
-    }
+  :root {
+    --bg:        #f0ede8;
+    --surface:   #ffffff;
+    --border:    #d8d3cc;
+    --ink:       #1c1917;
+    --ink-mid:   #57534e;
+    --ink-light: #a8a29e;
+    --accent:    #16a34a;
+    --accent-dk: #15803d;
+    --sent-bg:   #1c1917;
+    --sent-tx:   #f5f0eb;
+    --recv-bg:   #e7e2db;
+    --recv-tx:   #1c1917;
+    --danger:    #dc2626;
+    --font:      'IBM Plex Sans', sans-serif;
+    --mono:      'IBM Plex Mono', monospace;
+    --shadow:    0 2px 12px rgba(0,0,0,.08);
+  }
 
-    html, body { height: 100%; }
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--ink);
-      font-size: 15px;
-      line-height: 1.5;
-    }
+  html {
+    height: 100%;
+    /* Prevent font size boost on iOS landscape */
+    -webkit-text-size-adjust: 100%;
+  }
 
-    /* =========================================================
-       SCREEN MANAGER
-       Only one .screen is visible at a time
-    ========================================================= */
-    .screen { display: none; }
-    .screen.active { display: flex; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+    height: 100%;
+    /* Use dvh (dynamic viewport height) so mobile address bar
+       doesn't push content off screen */
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
 
-    /* =========================================================
-       LOBBY SCREEN  (create / join)
-    ========================================================= */
-    #screen-lobby {
-      min-height: 100vh;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
+  /* ============================================================
+     SCREEN MANAGER
+  ============================================================ */
+  .screen { display: none; }
+  .screen.active { display: flex; }
 
-    .lobby-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      width: 100%;
-      max-width: 420px;
-      overflow: hidden;
-    }
+  /* ============================================================
+     LOBBY SCREEN
+  ============================================================ */
+  #screen-lobby {
+    min-height: 100dvh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
 
-    /* App title */
-    .lobby-header {
-      padding: 32px 32px 24px;
-      border-bottom: 1px solid var(--border);
-      text-align: center;
-    }
-    .lobby-header h1 {
-      font-size: 24px;
-      font-weight: 600;
-      letter-spacing: -0.5px;
-    }
-    .lobby-header h1 span { color: var(--accent); }
-    .lobby-header p {
-      margin-top: 4px;
-      font-size: 13px;
-      color: var(--ink-light);
-    }
+  .lobby-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+  }
 
-    /* Username row */
-    .lobby-body { padding: 24px 32px 28px; }
+  .lobby-header {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .lobby-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .lobby-header h1 span { color: var(--accent); }
+  .lobby-header p {
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--ink-light);
+  }
 
-    .field { margin-bottom: 16px; }
-    .field label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: var(--ink-mid);
-      margin-bottom: 6px;
-    }
-    .field input {
-      width: 100%;
-      padding: 11px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-family: var(--font);
-      font-size: 15px;
-      color: var(--ink);
-      background: var(--bg);
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .field input:focus { border-color: var(--accent); background: #fff; }
-    .field input::placeholder { color: var(--ink-light); }
+  .lobby-body { padding: 20px 24px 24px; }
 
-    /* Code input — monospace, large, centred */
-    .field input.code-field {
-      font-family: var(--mono);
-      font-size: 22px;
-      font-weight: 600;
-      letter-spacing: 6px;
-      text-align: center;
-      text-transform: uppercase;
-    }
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--ink-mid);
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: var(--font);
+    font-size: 16px;   /* 16px prevents iOS zoom on focus */
+    color: var(--ink);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  .field input:focus { border-color: var(--accent); background: #fff; }
+  .field input::placeholder { color: var(--ink-light); }
+  .field input.code-field {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+  }
 
-    /* Divider between Create / Join */
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 20px 0;
-      color: var(--ink-light);
-      font-size: 12px;
-    }
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+    color: var(--ink-light);
+    font-size: 12px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
 
-    /* Buttons */
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 12px 20px;
-      border: none;
-      border-radius: var(--radius-sm);
-      font-family: var(--font);
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-      text-align: center;
-    }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn:not(:disabled):hover { opacity: 0.88; }
-    .btn:not(:disabled):active { transform: scale(0.98); }
+  /* Buttons */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 10px;
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn:not(:disabled):active { transform: scale(0.98); opacity: 0.88; }
+  .btn-primary  { background: var(--accent); color: #fff; }
+  .btn-secondary {
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid var(--border);
+  }
 
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-secondary {
-      background: transparent;
-      color: var(--ink);
-      border: 1.5px solid var(--border);
-    }
-    .btn-secondary:hover { border-color: var(--ink-mid); }
+  .notice {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: none;
+  }
+  .notice.error   { background: #fef2f2; color: var(--danger); }
+  .notice.success { background: #f0fdf4; color: var(--accent-dk); }
+  .notice.show    { display: block; }
 
-    /* Error notice */
-    .notice {
-      margin-top: 12px;
-      padding: 10px 14px;
-      border-radius: var(--radius-sm);
-      font-size: 13px;
-      display: none;
-    }
-    .notice.error   { background: #fef2f2; color: var(--danger); }
-    .notice.success { background: #f0fdf4; color: var(--accent-dk); }
-    .notice.show    { display: block; }
+  /* ============================================================
+     WAITING SCREEN
+  ============================================================ */
+  #screen-waiting {
+    min-height: 100dvh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
 
-    /* =========================================================
-       WAITING SCREEN  (show code, waiting for peer)
-    ========================================================= */
-    #screen-waiting {
-      min-height: 100vh;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
+  .waiting-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 360px;
+    padding: 32px 24px;
+    text-align: center;
+  }
+  .waiting-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .waiting-card .sub { font-size: 13px; color: var(--ink-light); margin-bottom: 24px; }
 
-    .waiting-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      width: 100%;
-      max-width: 380px;
-      padding: 36px 32px;
-      text-align: center;
-    }
-    .waiting-card h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
-    .waiting-card .sub { font-size: 13px; color: var(--ink-light); margin-bottom: 28px; }
+  .code-box {
+    background: var(--ink);
+    color: #fff;
+    border-radius: 14px;
+    padding: 18px 20px 14px;
+    margin-bottom: 16px;
+  }
+  .code-box .label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #a8a29e;
+    margin-bottom: 8px;
+  }
+  .code-box .code {
+    font-family: var(--mono);
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: 7px;
+  }
 
-    /* The big code display */
-    .code-box {
-      background: var(--ink);
-      color: #fff;
-      border-radius: var(--radius-md);
-      padding: 20px 24px 16px;
-      margin-bottom: 20px;
-    }
-    .code-box .label {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: #a8a29e;
-      margin-bottom: 8px;
-    }
-    .code-box .code {
-      font-family: var(--mono);
-      font-size: 36px;
-      font-weight: 600;
-      letter-spacing: 8px;
-    }
+  .btn-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: none;
+    font-family: var(--font);
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--ink-mid);
+    transition: all 0.15s;
+    margin-bottom: 20px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-copy:active, .btn-copy.copied { border-color: var(--accent); color: var(--accent); }
 
-    /* Copy button */
-    .btn-copy {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 18px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: none;
-      font-family: var(--font);
-      font-size: 13px;
-      cursor: pointer;
-      color: var(--ink-mid);
-      transition: all 0.15s;
-      margin-bottom: 24px;
-    }
-    .btn-copy:hover { border-color: var(--accent); color: var(--accent); }
-    .btn-copy.copied { border-color: var(--accent); color: var(--accent); }
+  .pulse-row { display: flex; gap: 6px; justify-content: center; margin-bottom: 16px; }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dotPulse {
+    0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+    40%           { opacity: 1;    transform: scale(1);   }
+  }
 
-    /* Pulsing dots */
-    .pulse-row {
-      display: flex;
-      gap: 6px;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-      animation: dotPulse 1.4s ease-in-out infinite;
-    }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes dotPulse {
-      0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
-      40%           { opacity: 1;    transform: scale(1);   }
-    }
+  .btn-back {
+    background: none; border: none;
+    font-family: var(--font); font-size: 13px;
+    color: var(--ink-light); cursor: pointer; text-decoration: underline;
+    padding: 8px;
+  }
 
-    .btn-back {
-      background: none;
-      border: none;
-      font-family: var(--font);
-      font-size: 13px;
-      color: var(--ink-light);
-      cursor: pointer;
-      text-decoration: underline;
-    }
-    .btn-back:hover { color: var(--ink); }
+  /* ============================================================
+     CHAT SCREEN — full height, keyboard-aware
+  ============================================================ */
+  #screen-chat {
+    /* Use dvh so the view shrinks when phone keyboard appears */
+    height: 100dvh;
+    max-height: 100dvh;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
-    /* =========================================================
-       CHAT SCREEN
-    ========================================================= */
-    #screen-chat {
-      height: 100vh;
-      flex-direction: column;
-    }
+  /* ── Header ── */
+  .chat-header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    height: 54px;
+    min-height: 54px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+  }
+  .chat-header .room-info  { flex: 1; min-width: 0; }
+  .chat-header .room-name  { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-header .room-subtitle { margin-top: 1px; }
 
-    /* ── Top bar ── */
-    .chat-header {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 0 16px;
-      height: 56px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-    }
-    .chat-header .room-info { flex: 1; }
-    .chat-header .room-name {
-      font-size: 15px;
-      font-weight: 600;
-    }
-    .chat-header .room-code-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--ink-mid);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 2px 10px;
-      letter-spacing: 2px;
-    }
+  .room-code-pill {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--ink-mid);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 8px;
+    letter-spacing: 1.5px;
+  }
 
-    /* ── Messages area ── */
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    /* Scrollbar */
-    .messages::-webkit-scrollbar { width: 4px; }
-    .messages::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 99px;
-    }
+  /* ── Exit button ── */
+  .exit-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 11px;
+    background: #fff0f0;
+    border: 1.5px solid #fca5a5;
+    border-radius: 8px;
+    color: var(--danger);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s;
+  }
+  .exit-btn:active { background: var(--danger); color: #fff; border-color: var(--danger); }
 
-    /* Date separator */
-    .day-label {
-      text-align: center;
-      font-size: 11px;
-      color: var(--ink-light);
-      padding: 8px 0;
-    }
+  /* ── Chat body = sidebar + main ── */
+  .chat-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    min-height: 0;
+  }
 
-    /* Individual message bubble */
-    .msg-row {
-      display: flex;
-      flex-direction: column;
-      max-width: 78%;
-      animation: slideIn 0.18s ease;
-    }
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: none; }
-    }
+  /* ── Sidebar — hidden on mobile, shown on desktop ── */
+  .sidebar {
+    width: 190px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 14px 10px;
+    overflow-y: auto;
+  }
+  .sidebar-title {
+    font-size: 12px; font-weight: 700;
+    color: var(--ink); margin-bottom: 12px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .sidebar-section-label {
+    font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--ink-light); margin-bottom: 6px;
+  }
 
-    /* My messages go to the right */
-    .msg-row.mine  { align-self: flex-end;  align-items: flex-end; }
-    /* Their messages go to the left */
-    .msg-row.theirs { align-self: flex-start; align-items: flex-start; }
+  .member-card {
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 8px; border-radius: 8px; margin-bottom: 4px;
+    background: var(--bg); border: 1px solid var(--border);
+    animation: slideIn 0.2s ease;
+  }
+  .member-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; text-transform: uppercase;
+  }
+  .member-avatar.you { background: var(--ink); }
+  .member-info { flex: 1; min-width: 0; }
+  .member-name { font-size: 11px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .member-tag  { font-size: 9px; color: var(--ink-light); }
+  .online-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 
-    /* Sender name shown above first message in a group */
-    .msg-sender {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--ink-mid);
-      margin-bottom: 3px;
-      padding: 0 4px;
-    }
-    .msg-row.mine .msg-sender { color: var(--accent-dk); }
+  .waiting-member {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 8px; border-radius: 8px;
+    border: 1.5px dashed var(--border); margin-bottom: 4px;
+    color: var(--ink-light); font-size: 11px;
+  }
+  .waiting-pulse {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--ink-light);
+    animation: dotPulse 1.4s ease-in-out infinite; flex-shrink: 0;
+  }
 
-    /* The bubble itself */
-    .bubble {
-      padding: 9px 14px;
-      border-radius: 16px;
-      font-size: 14px;
-      line-height: 1.55;
-      word-break: break-word;
-      white-space: pre-wrap;   /* preserve line breaks */
-    }
-    .msg-row.mine   .bubble { background: var(--sent-bg); color: var(--sent-tx); border-bottom-right-radius: 4px; }
-    .msg-row.theirs .bubble { background: var(--recv-bg); color: var(--recv-tx); border-bottom-left-radius: 4px; }
+  .sidebar-room-code {
+    font-family: var(--mono); font-size: 14px; font-weight: 600;
+    letter-spacing: 3px; color: var(--ink); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px; text-align: center; margin-bottom: 8px;
+  }
+  .sidebar-copy-btn {
+    width: 100%; padding: 7px;
+    background: none; border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: var(--font); font-size: 11px; font-weight: 500;
+    color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+  }
+  .sidebar-copy-btn:active { border-color: var(--accent); color: var(--accent); }
 
-    /* Consecutive bubbles from same person: tighten corners */
-    .msg-row.mine   + .msg-row.mine   .bubble { border-top-right-radius: 4px; }
-    .msg-row.theirs + .msg-row.theirs .bubble { border-top-left-radius: 4px; }
+  /* ── Main chat column ── */
+  .chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+  }
 
-    /* Timestamp shown under each bubble */
-    .msg-time {
-      font-size: 10px;
-      color: var(--ink-light);
-      padding: 2px 4px 0;
-    }
+  /* ── Messages area ── */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 12px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    /* Smooth momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .messages::-webkit-scrollbar { width: 3px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 
-    /* System message (e.g. "joined the room") */
-    .msg-system {
-      align-self: center;
-      font-size: 12px;
-      color: var(--ink-light);
-      background: var(--bg);
-      padding: 4px 14px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-    }
+  .msg-row {
+    display: flex;
+    flex-direction: column;
+    max-width: 82%;
+    animation: slideIn 0.18s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .msg-row.mine   { align-self: flex-end;   align-items: flex-end; }
+  .msg-row.theirs { align-self: flex-start; align-items: flex-start; }
 
-    /* Empty state */
-    .empty-state {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      color: var(--ink-light);
-      font-size: 13px;
-      padding-bottom: 40px;
-    }
-    .empty-state .icon { font-size: 32px; opacity: 0.4; }
+  .msg-sender {
+    font-size: 11px; font-weight: 600;
+    color: var(--ink-mid); margin-bottom: 3px; padding: 0 4px;
+  }
+  .msg-row.mine .msg-sender { color: var(--accent-dk); }
 
-    /* ── Typing indicator ── */
-    .typing-bar {
-      min-height: 24px;
-      padding: 0 20px;
-      font-size: 12px;
-      color: var(--ink-light);
-      font-style: italic;
-    }
+  .bubble {
+    padding: 9px 13px;
+    border-radius: 16px;
+    font-size: 15px;
+    line-height: 1.5;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+  .msg-row.mine   .bubble { background: var(--sent-bg); color: var(--sent-tx); border-bottom-right-radius: 4px; }
+  .msg-row.theirs .bubble { background: var(--recv-bg); color: var(--recv-tx); border-bottom-left-radius: 4px; }
 
-    /* ── Input bar ── */
-    .input-bar {
-      flex-shrink: 0;
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-      padding: 12px 16px 16px;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-    }
+  .msg-row.mine   + .msg-row.mine   .bubble { border-top-right-radius: 4px; }
+  .msg-row.theirs + .msg-row.theirs .bubble { border-top-left-radius: 4px;  }
 
-    #msg-input {
-      flex: 1;
-      padding: 10px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-md);
-      font-family: var(--font);
-      font-size: 15px;
-      color: var(--ink);
-      background: var(--bg);
-      resize: none;
-      outline: none;
-      min-height: 44px;
-      max-height: 120px;
-      overflow-y: auto;
-      line-height: 1.5;
-      transition: border-color 0.15s;
-    }
-    #msg-input:focus { border-color: var(--accent); background: #fff; }
-    #msg-input::placeholder { color: var(--ink-light); }
+  .msg-time {
+    font-size: 10px; color: var(--ink-light); padding: 2px 4px 0;
+  }
 
-    #send-btn {
-      flex-shrink: 0;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: var(--accent);
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.15s, transform 0.1s;
-    }
-    #send-btn:hover:not(:disabled)  { background: var(--accent-dk); }
-    #send-btn:active:not(:disabled) { transform: scale(0.93); }
-    #send-btn:disabled { background: var(--border); cursor: not-allowed; }
-    #send-btn svg { width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 2; }
+  .empty-state {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 6px; color: var(--ink-light); font-size: 13px;
+    padding-bottom: 40px;
+  }
+  .empty-state .icon { font-size: 32px; opacity: 0.4; }
 
-    /* =========================================================
-       RESPONSIVE
-    ========================================================= */
-    @media (max-width: 480px) {
-      .lobby-body   { padding: 20px; }
-      .lobby-header { padding: 24px 20px 18px; }
-      .code-box .code { font-size: 28px; }
-      .msg-row { max-width: 90%; }
-    }
-  </style>
+  /* ── Typing indicator ── */
+  .typing-bar {
+    flex-shrink: 0;
+    min-height: 22px;
+    padding: 0 16px;
+    font-size: 12px;
+    color: var(--ink-light);
+    font-style: italic;
+  }
+
+  /* ── Image preview bar ── */
+  .image-preview-bar {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    background: #fffbf5;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .image-preview-bar img {
+    width: 44px; height: 44px;
+    object-fit: cover; border-radius: 8px;
+    border: 1px solid var(--border); flex-shrink: 0;
+  }
+  .image-preview-bar span {
+    flex: 1; font-size: 12px; color: var(--ink-mid);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .remove-image-btn {
+    background: none; border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px;
+    font-size: 12px; color: var(--danger);
+    cursor: pointer; flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Input bar ── */
+  .input-bar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 10px 12px 12px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    /* Extra bottom padding for iPhone home indicator */
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  /* Image upload button */
+  .img-btn {
+    flex-shrink: 0;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-mid);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .img-btn:active { border-color: var(--accent); color: var(--accent); }
+
+  #msg-input {
+    flex: 1;
+    padding: 10px 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    font-family: var(--font);
+    font-size: 16px;  /* 16px prevents iOS keyboard zoom */
+    color: var(--ink);
+    background: var(--bg);
+    resize: none;
+    outline: none;
+    min-height: 42px;
+    max-height: 100px;
+    overflow-y: auto;
+    line-height: 1.5;
+    -webkit-appearance: none;
+  }
+  #msg-input:focus { border-color: var(--accent); background: #fff; }
+  #msg-input::placeholder { color: var(--ink-light); }
+
+  #send-btn {
+    flex-shrink: 0;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #send-btn:active:not(:disabled) { background: var(--accent-dk); transform: scale(0.93); }
+  #send-btn:disabled { background: var(--border); cursor: not-allowed; }
+  #send-btn svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2.2; }
+
+  /* ── Image bubble ── */
+  .bubble-image {
+    max-width: 220px; max-height: 220px;
+    width: 100%; border-radius: 10px;
+    display: block; cursor: pointer;
+    border: 2px solid rgba(0,0,0,0.06);
+  }
+  .deleted-image {
+    font-size: 12px; font-style: italic;
+    color: var(--ink-light); padding: 4px 0;
+  }
+
+  /* ── Fullscreen image overlay ── */
+  .img-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(0,0,0,0.92);
+    display: flex; align-items: center; justify-content: center;
+    cursor: zoom-out;
+  }
+  .img-overlay img {
+    max-width: 96vw; max-height: 88vh;
+    border-radius: 8px;
+  }
+  .img-overlay-close {
+    position: fixed; top: 14px; right: 16px;
+    color: #fff; font-size: 32px; cursor: pointer;
+    background: none; border: none; line-height: 1;
+    padding: 8px; /* larger tap target */
+  }
+
+  /* ============================================================
+     DESKTOP — show sidebar when there is room
+  ============================================================ */
+  @media (min-width: 600px) {
+    .sidebar { display: flex; }
+  }
+
+  /* ============================================================
+     MOBILE — sidebar hidden, everything stacked
+  ============================================================ */
+  @media (max-width: 599px) {
+    .sidebar { display: none; }
+
+    /* Lobby card fills screen nicely */
+    #screen-lobby  { padding: 12px; justify-content: flex-start; padding-top: 40px; }
+    .lobby-card    { border-radius: 16px; }
+    .lobby-header  { padding: 22px 18px 16px; }
+    .lobby-body    { padding: 18px 18px 22px; }
+
+    /* Bigger touch targets on mobile */
+    .field input   { font-size: 16px; padding: 13px 12px; }
+    .btn           { padding: 14px; font-size: 16px; }
+
+    /* Messages take up more width on narrow screens */
+    .msg-row       { max-width: 88%; }
+    .bubble        { font-size: 15px; }
+
+    /* Waiting card fills better */
+    .waiting-card  { padding: 28px 20px; }
+    .code-box .code { font-size: 26px; letter-spacing: 5px; }
+
+    /* Header room name shorter */
+    .chat-header   { padding: 0 10px; height: 50px; min-height: 50px; }
+    .chat-header .room-name { font-size: 13px; }
+
+    /* Input bar comfortable on mobile */
+    .input-bar     { padding: 8px 10px; padding-bottom: max(10px, env(safe-area-inset-bottom)); gap: 7px; }
+    #msg-input     { font-size: 16px; }
+
+    /* Smaller image bubbles on mobile */
+    .bubble-image  { max-width: 180px; max-height: 180px; }
+  }
+
+  /* ── Seen receipt ── */
+  .msg-seen {
+    font-size: 10px;
+    color: var(--accent);
+    padding: 1px 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-weight: 500;
+  }
+  .msg-seen svg {
+    width: 13px; height: 13px;
+    flex-shrink: 0;
+  }
+  /* Sent but not yet seen */
+  .msg-sent-tick {
+    font-size: 10px;
+    color: var(--ink-light);
+    padding: 1px 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .msg-sent-tick svg {
+    width: 13px; height: 13px;
+    flex-shrink: 0;
+  }
+
+  /* ── Typing indicator bubble ── */
+  .typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px 4px;
+    min-height: 32px;
+  }
+  .typing-bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--recv-bg);
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+    padding: 8px 12px;
+  }
+  .typing-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--ink-light);
+    animation: typingBounce 1.2s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0);    opacity: 0.4; }
+    30%           { transform: translateY(-5px); opacity: 1;   }
+  }
+  .typing-name {
+    font-size: 11px;
+    color: var(--ink-light);
+    font-style: italic;
+    margin-left: 4px;
+  }
+</style>
 </head>
 <body>
 
@@ -576,41 +795,91 @@
   ===================================================== -->
   <div id="screen-chat" class="screen">
 
-    <!-- Header bar -->
+    <!-- ── Top header bar ── -->
     <div class="chat-header">
       <div class="room-info">
         <div class="room-name" id="chat-peer-name">Chat</div>
+        <div class="room-subtitle">
+          <span class="room-code-pill" id="chat-room-code-display"></span>
+        </div>
       </div>
-      <span class="room-code-pill" id="chat-room-code-display"></span>
-    </div>
-
-    <!-- Messages list -->
-    <div class="messages" id="messages-box">
-      <div class="empty-state" id="empty-state">
-        <div class="icon">💬</div>
-        <span>No messages yet — say hello!</span>
-      </div>
-    </div>
-
-    <!-- Typing indicator -->
-    <div class="typing-bar" id="typing-bar"></div>
-
-    <!-- Input -->
-    <div class="input-bar">
-      <textarea id="msg-input"
-                placeholder="Type a message… (Enter to send)"
-                rows="1"
-                oninput="onInputChange()"
-                onkeydown="onInputKeydown(event)"></textarea>
-
-      <button id="send-btn" onclick="sendMessage()" disabled>
-        <!-- send / paper-plane icon -->
-        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"/>
-          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      <!-- Exit button -->
+      <button class="exit-btn" onclick="leaveChat()" title="Leave chat">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
         </svg>
+        Leave
       </button>
     </div>
+
+    <!-- ── Chat body: sidebar + messages ── -->
+    <div class="chat-body">
+
+      <!-- Sidebar -->
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-title">Members</div>
+
+        <div class="sidebar-section-label">In this room</div>
+        <div id="members-list">
+          <!-- filled by JS -->
+        </div>
+
+        <div class="sidebar-section-label" style="margin-top:16px;">Room</div>
+        <div class="sidebar-room-code" id="sidebar-code"></div>
+        <button class="sidebar-copy-btn" onclick="copyRoomCode()">Copy code</button>
+      </div>
+
+      <!-- Main chat column -->
+      <div class="chat-main">
+
+        <!-- Messages -->
+        <div class="messages" id="messages-box">
+          <div class="empty-state" id="empty-state">
+            <div class="icon">&#x1F4AC;</div>
+            <span>No messages yet — say hello!</span>
+          </div>
+        </div>
+
+        <!-- Typing indicator -->
+        <div class="typing-indicator" id="typing-bar"></div>
+
+        <!-- Image preview bar -->
+        <div class="image-preview-bar" id="image-preview-bar" style="display:none;">
+          <img id="image-preview-thumb" src="" alt="preview"/>
+          <span id="image-preview-name"></span>
+          <button class="remove-image-btn" onclick="removeSelectedImage()">&#x2715; Remove</button>
+        </div>
+
+        <!-- Input -->
+        <div class="input-bar">
+          <input type="file" id="image-input" accept="image/jpeg,image/png,image/gif,image/webp"
+                 style="display:none" onchange="onImageSelected(event)"/>
+          <button class="img-btn" onclick="document.getElementById('image-input').click()" title="Send image">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </button>
+          <textarea id="msg-input"
+                    placeholder="Type a message… (Enter to send)"
+                    rows="1"
+                    oninput="onInputChange()"
+                    onkeydown="onInputKeydown(event)"></textarea>
+          <button id="send-btn" onclick="sendMessage()" disabled>
+            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+
+      </div><!-- /chat-main -->
+    </div><!-- /chat-body -->
 
   </div>
 
@@ -619,291 +888,518 @@
        JAVASCRIPT
   ===================================================== -->
   <script>
-    // -------------------------------------------------------
-    // App state — everything we need to remember
-    // -------------------------------------------------------
+    // ── App state ───────────────────────────────────────────
     const app = {
-      username:      '',    // chosen by user on lobby screen
-      roomCode:      '',    // 6-char room code
-      lastMessageId: 0,     // highest message ID we've seen (for efficient polling)
-      pollTimer:     null,  // reference to setInterval so we can clear it
-      waitTimer:     null,  // interval on the waiting screen
+      username:       '',
+      roomCode:       '',
+      lastMessageId:  0,
+      renderedIds:    new Set(),   // message IDs drawn — prevents duplicates
+      seenIds:        new Set(),   // message IDs already marked seen — skip re-updates
+      pollTimer:      null,
+      heartbeatTimer: null,
+      selectedImage:  null,
+      members:        [],
+      membersKey:     '',          // JSON snapshot of members — detect real changes only
+      isTyping:       false,
+      typingTimeout:  null,
+      _lastTypingKey: '',          // last typing state shown — prevents DOM flicker
     };
 
-    // -------------------------------------------------------
-    // Utility: show / hide screens
-    // -------------------------------------------------------
+    // ── Utilities ───────────────────────────────────────────
     function showScreen(id) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
     }
-
-    // -------------------------------------------------------
-    // Utility: show an error message under a button
-    // -------------------------------------------------------
     function showError(elId, text) {
       const el = document.getElementById(elId);
-      el.textContent = text;
-      el.classList.add('show');
+      el.textContent = text; el.classList.add('show');
     }
-    function hideError(elId) {
-      document.getElementById(elId).classList.remove('show');
-    }
+    function hideError(elId) { document.getElementById(elId).classList.remove('show'); }
 
-    // -------------------------------------------------------
-    // Utility: generic POST helper (returns parsed JSON)
-    // -------------------------------------------------------
     async function apiPost(url, data) {
       const res = await fetch(url, {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(data),
+        body: JSON.stringify(data),
       });
       return res.json();
     }
 
-    // -------------------------------------------------------
-    // LOBBY: Create a new room
-    // -------------------------------------------------------
+    function formatTime(str) {
+      if (!str) return '';
+      return new Date(str.replace(' ', 'T')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ── Create room ─────────────────────────────────────────
     async function handleCreate() {
       hideError('create-error');
-
       const username = document.getElementById('username-input').value.trim();
-      if (!username) {
-        showError('create-error', 'Please enter your name first.');
-        return;
-      }
-
+      if (!username) { showError('create-error', 'Please enter your name first.'); return; }
       const btn = document.getElementById('create-btn');
-      btn.disabled = true;
-      btn.textContent = 'Creating…';
-
+      btn.disabled = true; btn.textContent = 'Creating…';
       try {
         const data = await apiPost('create_room.php', {});
-
-        if (!data.ok) {
-          showError('create-error', data.error || 'Failed to create room.');
-          return;
-        }
-
-        // Save to app state
+        if (!data.ok) { showError('create-error', data.error || 'Failed to create room.'); return; }
         app.username = username;
         app.roomCode = data.room_code;
-
-        // Go straight into the chat room — creator can start chatting right away.
-        // Store the code so it shows in the header.
         enterChat();
-
       } catch (err) {
         showError('create-error', 'Network error — is the PHP server running?');
       } finally {
-        btn.disabled = false;
-        btn.textContent = 'Create a new room';
+        btn.disabled = false; btn.textContent = 'Create a new room';
       }
     }
 
-    // -------------------------------------------------------
-    // LOBBY: Join an existing room
-    // -------------------------------------------------------
+    // ── Join room ───────────────────────────────────────────
     async function handleJoin() {
       hideError('join-error');
-
       const username = document.getElementById('username-input').value.trim();
       const code     = document.getElementById('join-code-input').value.trim().toUpperCase();
-
       if (!username) { showError('join-error', 'Please enter your name first.'); return; }
-      if (code.length !== 6) { showError('join-error', 'Room code must be exactly 6 characters.'); return; }
-
+      if (code.length !== 6) { showError('join-error', 'Room code must be 6 characters.'); return; }
       const btn = document.getElementById('join-btn');
-      btn.disabled = true;
-      btn.textContent = 'Joining…';
-
+      btn.disabled = true; btn.textContent = 'Joining…';
       try {
         const data = await apiPost('join_room.php', { room_code: code });
-
-        if (!data.ok) {
-          showError('join-error', data.error || 'Could not join room.');
-          return;
-        }
-
-        // Valid room — save state and enter chat
+        if (!data.ok) { showError('join-error', data.error || 'Could not join room.'); return; }
         app.username = username;
         app.roomCode = code;
         enterChat();
-
       } catch (err) {
         showError('join-error', 'Network error — is the PHP server running?');
       } finally {
-        btn.disabled = false;
-        btn.textContent = 'Join room';
+        btn.disabled = false; btn.textContent = 'Join room';
       }
     }
 
-    // -------------------------------------------------------
-    // WAITING SCREEN: copy the code to clipboard
-    // -------------------------------------------------------
     function copyCode() {
       navigator.clipboard.writeText(app.roomCode).then(() => {
         const btn = document.getElementById('copy-btn');
-        btn.textContent = '✓ Copied!';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = 'Copy code';
-          btn.classList.remove('copied');
-        }, 2000);
+        btn.textContent = '✓ Copied!'; btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy code'; btn.classList.remove('copied'); }, 2000);
       });
     }
 
-    // -------------------------------------------------------
-    // WAITING SCREEN: go back to lobby
-    // -------------------------------------------------------
+    function copyRoomCode() {
+      navigator.clipboard.writeText(app.roomCode).then(() => {
+        const btn = document.querySelector('.sidebar-copy-btn');
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => { btn.textContent = 'Copy code'; }, 2000);
+      });
+    }
+
     function goBackToLobby() {
       clearInterval(app.pollTimer);
-      clearInterval(app.waitTimer);
+      clearInterval(app.heartbeatTimer);
       showScreen('screen-lobby');
     }
 
-    // -------------------------------------------------------
-    // ENTER CHAT — called after create or join succeeds
-    // -------------------------------------------------------
-    function enterChat() {
-      // Update header
-      document.getElementById('chat-peer-name').textContent  = `Hello, ${app.username}`;
-      document.getElementById('chat-room-code-display').textContent = app.roomCode;
-
-      // Reset message state
-      app.lastMessageId = 0;
-      document.getElementById('messages-box').innerHTML =
-        '<div class="empty-state" id="empty-state"><div class="icon">💬</div><span>No messages yet — say hello!</span></div>';
-
-      showScreen('screen-chat');
-
-      // Start polling for new messages every 1.5 seconds
+    // ── Leave chat ──────────────────────────────────────────
+    function leaveChat() {
+      if (!confirm('Leave this chat room?')) return;
       clearInterval(app.pollTimer);
-      app.pollTimer = setInterval(pollMessages, 1500);
-
-      // Also poll immediately so we don't wait 1.5s on first load
-      pollMessages();
+      clearInterval(app.heartbeatTimer);
+      app.pollTimer = null; app.heartbeatTimer = null;
+      app.username = ''; app.roomCode = '';
+      app.lastMessageId = 0; app.renderedIds = new Set();
+      app.members = []; app.selectedImage = null; app.isTyping = false;
+      document.getElementById('username-input').value  = '';
+      document.getElementById('join-code-input').value = '';
+      removeSelectedImage();
+      showScreen('screen-lobby');
     }
 
-    // -------------------------------------------------------
-    // POLLING: fetch new messages from the server
-    // -------------------------------------------------------
-    async function pollMessages() {
-      if (!app.roomCode) return;
+    // ── Enter chat ──────────────────────────────────────────
+    function enterChat() {
+      document.getElementById('chat-peer-name').textContent        = 'Room · ' + app.roomCode;
+      document.getElementById('chat-room-code-display').textContent = app.roomCode;
+      document.getElementById('sidebar-code').textContent           = app.roomCode;
 
+      app.lastMessageId = 0;
+      app.renderedIds   = new Set();
+      app.seenIds       = new Set();
+      app.membersKey    = '';
+      app._lastTypingKey = '';
+      app.members       = [app.username];
+      updateSidebar(true);
+
+      document.getElementById('messages-box').innerHTML =
+        '<div class="empty-state" id="empty-state"><div class="icon">&#x1F4AC;</div><span>No messages yet — say hello!</span></div>';
+
+      showScreen('screen-chat');
+      clearInterval(app.pollTimer);
+      app.pollTimer = setInterval(pollMessages, 1500);
+      pollMessages();
+      clearInterval(app.heartbeatTimer);
+      sendHeartbeat();
+      app.heartbeatTimer = setInterval(sendHeartbeat, 3000);
+    }
+
+    // ── Heartbeat ───────────────────────────────────────────
+    async function sendHeartbeat(typing) {
+      if (!app.roomCode || !app.username) return;
       try {
-        const url = `fetch_messages.php?room_code=${encodeURIComponent(app.roomCode)}&after_id=${app.lastMessageId}`;
-        const res  = await fetch(url);
-        const data = await res.json();
-
-        if (!data.ok || !data.messages) return;
-
-        // Append each new message to the chat
-        data.messages.forEach(msg => {
-          appendMessage(msg);
-          // Track the highest ID we've seen
-          if (parseInt(msg.id) > app.lastMessageId) {
-            app.lastMessageId = parseInt(msg.id);
-          }
+        const res  = await fetch('heartbeat.php', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            room_code: app.roomCode,
+            username:  app.username,
+            is_typing: typing === true ? 1 : 0,
+          }),
         });
+        const data = await res.json();
+        if (data.ok && data.active_users) {
+          app.members = data.active_users;
+          updateSidebar();  // updateSidebar internally skips if nothing changed
+        }
+      } catch (e) { /* silent */ }
+    }
 
-      } catch (err) {
-        // Silently ignore network hiccups during polling
-        console.warn('Poll error:', err);
+    // ── Typing detection ─────────────────────────────────────
+    // Called on every keystroke.
+    // Sends is_typing=1 on first keystroke, stays true until
+    // 5 seconds of silence, then sends is_typing=0.
+    function onTypingInput() {
+      if (!app.isTyping) {
+        app.isTyping = true;
+        sendHeartbeat(true);   // immediately tell server: started typing
+      }
+      // Reset the stop-timer on every keystroke
+      clearTimeout(app.typingTimeout);
+      app.typingTimeout = setTimeout(() => {
+        app.isTyping = false;
+        sendHeartbeat(false);  // tell server: stopped typing
+      }, 5000);  // 5s of silence = stopped typing
+    }
+
+    // ── Sidebar — only rebuilds when membership actually changes ────────────
+    function updateSidebar(force) {
+      const newKey = JSON.stringify(app.members);
+      if (!force && newKey === app.membersKey) return; // nothing changed — skip rebuild
+      app.membersKey = newKey;
+
+      const list = document.getElementById('members-list');
+      list.innerHTML = '';
+
+      app.members.forEach(name => {
+        const card   = document.createElement('div');
+        card.className = 'member-card';
+
+        const ava    = document.createElement('div');
+        ava.className   = 'member-avatar' + (name === app.username ? ' you' : '');
+        ava.textContent = name.charAt(0).toUpperCase();
+
+        const info   = document.createElement('div');
+        info.className = 'member-info';
+
+        const nameEl = document.createElement('div');
+        nameEl.className   = 'member-name';
+        nameEl.textContent = name;
+
+        const tag    = document.createElement('div');
+        tag.className   = 'member-tag';
+        tag.textContent  = name === app.username ? 'You' : 'Member';
+
+        const dot    = document.createElement('div');
+        dot.className = 'online-dot';
+
+        info.appendChild(nameEl);
+        info.appendChild(tag);
+        card.appendChild(ava);
+        card.appendChild(info);
+        card.appendChild(dot);
+        list.appendChild(card);
+      });
+
+      if (app.members.length < 2) {
+        const waiting   = document.createElement('div');
+        waiting.className = 'waiting-member';
+        const pulse     = document.createElement('div');
+        pulse.className = 'waiting-pulse';
+        waiting.appendChild(pulse);
+        waiting.appendChild(document.createTextNode('Waiting for someone…'));
+        list.appendChild(waiting);
       }
     }
 
-    // -------------------------------------------------------
-    // RENDER: add one message bubble to the chat
-    // -------------------------------------------------------
+    // ── Poll for new messages ────────────────────────────────
+    async function pollMessages() {
+      if (!app.roomCode) return;
+      try {
+        // Only mark seen when tab is visible (not minimized/background)
+        // document.hidden is supported on all modern browsers
+        const tabActive = (typeof document.hidden !== 'undefined' && !document.hidden) ? 1 : 0;
+        const url  = `fetch_messages.php?room_code=${encodeURIComponent(app.roomCode)}&after_id=${app.lastMessageId}&username=${encodeURIComponent(app.username)}&tab_active=${tabActive}`;
+        const res  = await fetch(url);
+        const data = await res.json();
+        if (!data.ok) return;
+
+        // ── Render new messages ──────────────────────────────
+        // renderedIds is the single source of truth for what's on screen.
+        // lastMessageId is only used as a DB query optimisation (fetch id > X).
+        if (data.messages && data.messages.length) {
+          data.messages.forEach(msg => {
+            const msgId = parseInt(msg.id);
+            // Always advance lastMessageId so the next poll doesn't re-fetch
+            if (msgId > app.lastMessageId) app.lastMessageId = msgId;
+            // Only render if not already on screen
+            if (app.renderedIds.has(msgId)) return;
+            app.renderedIds.add(msgId);
+            appendMessage(msg);
+          });
+        }
+
+        // ── Seen receipts — only update IDs we haven't processed yet ──────
+        if (data.seen_updates && data.seen_updates.length) {
+          data.seen_updates.forEach(update => {
+            const uid = parseInt(update.id);
+            if (app.seenIds.has(uid)) return;  // already marked — skip
+            app.seenIds.add(uid);
+            const el = document.getElementById('seen-' + uid);
+            if (el && el.className !== 'msg-seen') {
+              el.className = 'msg-seen';
+              el.innerHTML = seenTickSVG() + ' Seen ' + formatTime(update.seen_at);
+            }
+          });
+        }
+
+        // ── Typing indicator — only touch DOM when state changes ──────────
+        const isNowTyping  = data.typing && data.typing.length > 0;
+        const typingName   = isNowTyping ? data.typing[0] : '';
+        const typingKey    = isNowTyping ? typingName : '';
+        const typingBar    = document.getElementById('typing-bar');
+
+        if (typingKey !== (app._lastTypingKey || '')) {
+          app._lastTypingKey = typingKey;
+          typingBar.innerHTML = '';
+          if (isNowTyping) {
+            typingBar.innerHTML =
+              '<div class="typing-bubble">' +
+                '<div class="typing-dot"></div>' +
+                '<div class="typing-dot"></div>' +
+                '<div class="typing-dot"></div>' +
+              '</div>' +
+              '<span class="typing-name">' + escapeHtml(typingName) + ' is typing…</span>';
+            scrollToBottom();
+          }
+        }
+
+      } catch (err) { console.warn('Poll error:', err); }
+    }
+
+    // ── SVG icons ────────────────────────────────────────────
+    function seenTickSVG() {
+      // Double tick (WhatsApp-style)
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="1 12 5 16 11 8"/><polyline points="8 12 12 16 22 5"/>
+      </svg>`;
+    }
+    function sentTickSVG() {
+      // Single tick
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="5 12 10 17 19 7"/>
+      </svg>`;
+    }
+
+    function scrollToBottom() {
+      const box = document.getElementById('messages-box');
+      if (box) box.scrollTop = box.scrollHeight;
+    }
+
+    // ── Render a message bubble ──────────────────────────────
     function appendMessage(msg) {
       const box   = document.getElementById('messages-box');
       const empty = document.getElementById('empty-state');
-      if (empty) empty.remove();   // hide "no messages" placeholder
+      if (empty) empty.remove();
 
       const isMine = (msg.username === app.username);
-
-      // Wrapper row
-      const row = document.createElement('div');
+      const row    = document.createElement('div');
       row.className = 'msg-row ' + (isMine ? 'mine' : 'theirs');
 
-      // Sender name
       const sender = document.createElement('div');
-      sender.className = 'msg-sender';
+      sender.className   = 'msg-sender';
       sender.textContent = msg.username;
 
-      // Bubble
       const bubble = document.createElement('div');
       bubble.className = 'bubble';
-      bubble.textContent = msg.message;  // textContent prevents XSS
 
-      // Timestamp
-      const time = document.createElement('div');
-      time.className = 'msg-time';
-      time.textContent = formatTime(msg.sent_at);
+      if (msg.msg_type === 'image') {
+        if (msg.image_data) {
+          // Show the image — tap/click to fullscreen
+          const img     = document.createElement('img');
+          img.src       = msg.image_data;
+          img.className = 'bubble-image';
+          img.alt       = 'Image';
+          img.title     = 'Click to view full size';
+          img.onclick   = () => openImageOverlay(msg.image_data);
+          img.onerror   = () => { img.style.display = 'none'; };
+          bubble.appendChild(img);
+        } else {
+          // image_data is null — room may have been cleaned up
+          const del       = document.createElement('div');
+          del.className   = 'deleted-image';
+          del.textContent = '🖼️ Image no longer available';
+          bubble.appendChild(del);
+        }
+      } else {
+        bubble.textContent = msg.message;
+      }
+
+      const time        = document.createElement('div');
+      time.className    = 'msg-time';
+      time.textContent  = formatTime(msg.sent_at);
 
       row.appendChild(sender);
       row.appendChild(bubble);
       row.appendChild(time);
-      box.appendChild(row);
 
-      // Scroll to the newest message
-      box.scrollTop = box.scrollHeight;
+      // ── Seen receipt (only for MY messages) ─────────────────
+      if (isMine) {
+        const receipt     = document.createElement('div');
+        receipt.id        = 'seen-' + msg.id;
+
+        if (msg.seen_at) {
+          // Already seen when we first fetch it
+          receipt.className = 'msg-seen';
+          receipt.innerHTML = seenTickSVG() + ' Seen ' + formatTime(msg.seen_at);
+        } else {
+          // Sent but not yet seen — show single tick
+          receipt.className = 'msg-sent-tick';
+          receipt.innerHTML = sentTickSVG() + ' Sent';
+        }
+        row.appendChild(receipt);
+      }
+
+      box.appendChild(row);
+      scrollToBottom();
     }
 
-    // -------------------------------------------------------
-    // SEND MESSAGE
-    // -------------------------------------------------------
+    // ── Fullscreen image overlay ─────────────────────────────
+    function openImageOverlay(src) {
+      const overlay     = document.createElement('div');
+      overlay.className = 'img-overlay';
+      overlay.onclick   = () => overlay.remove();
+      const closeBtn      = document.createElement('button');
+      closeBtn.className  = 'img-overlay-close';
+      closeBtn.innerHTML  = '&times;';
+      closeBtn.onclick    = (e) => { e.stopPropagation(); overlay.remove(); };
+      const img     = document.createElement('img');
+      img.src       = src;
+      img.onclick   = (e) => e.stopPropagation();
+      overlay.appendChild(closeBtn);
+      overlay.appendChild(img);
+      document.body.appendChild(overlay);
+    }
+
+    // ── Image selection + compression ───────────────────────
+    function onImageSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Image too large. Max original size is 10MB.');
+        event.target.value = '';
+        return;
+      }
+      document.getElementById('image-preview-bar').style.display = 'flex';
+      document.getElementById('image-preview-name').textContent  = 'Compressing…';
+      document.getElementById('image-preview-thumb').src         = '';
+      document.getElementById('send-btn').disabled               = true;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX_PX  = 1280;
+          const QUALITY = 0.82;
+          let w = img.width, h = img.height;
+          if (w > MAX_PX || h > MAX_PX) {
+            if (w > h) { h = Math.round(h * MAX_PX / w); w = MAX_PX; }
+            else       { w = Math.round(w * MAX_PX / h); h = MAX_PX; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const compressed  = canvas.toDataURL('image/jpeg', QUALITY);
+          if (compressed.length / 1.37 > 9 * 1024 * 1024) {
+            alert('Image is too complex. Try a smaller image.');
+            removeSelectedImage(); return;
+          }
+          app.selectedImage = compressed;
+          document.getElementById('image-preview-thumb').src        = compressed;
+          document.getElementById('image-preview-name').textContent = file.name + ' (compressed)';
+          document.getElementById('send-btn').disabled              = false;
+        };
+        img.onerror = () => { alert('Could not read image.'); removeSelectedImage(); };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeSelectedImage() {
+      app.selectedImage = null;
+      const inp = document.getElementById('image-input');
+      if (inp) inp.value = '';
+      const bar = document.getElementById('image-preview-bar');
+      if (bar) bar.style.display = 'none';
+      const thumb = document.getElementById('image-preview-thumb');
+      if (thumb) thumb.src = '';
+      const input = document.getElementById('msg-input');
+      if (input) document.getElementById('send-btn').disabled = !input.value.trim();
+    }
+
+    // ── Send message ─────────────────────────────────────────
     async function sendMessage() {
       const input = document.getElementById('msg-input');
       const text  = input.value.trim();
-      if (!text) return;
+      if (!text && !app.selectedImage) return;
 
-      // Clear input immediately for responsive feel
+      // Stop typing indicator when message sent
+      app.isTyping = false;
+      clearTimeout(app.typingTimeout);
+      sendHeartbeat(false);
+
       input.value = '';
-      input.style.height = 'auto';   // reset auto-grow
+      input.style.height = 'auto';
       document.getElementById('send-btn').disabled = true;
+
+      const isImage     = !!app.selectedImage;
+      const imageToSend = app.selectedImage;
+      if (isImage) removeSelectedImage();
 
       try {
         const data = await apiPost('send_message.php', {
           room_code: app.roomCode,
           username:  app.username,
-          message:   text,
+          msg_type:  isImage ? 'image' : 'text',
+          message:   text || '',
+          image:     isImage ? imageToSend : undefined,
         });
 
-        if (!data.ok) {
-          // Put the text back so user doesn't lose it
+        if (data.ok && data.message_id) {
+          // Images are no longer burned after viewing — they stay in DB
+          // until both users leave. So both text and image messages are
+          // safely rendered by the poll like everything else.
+          pollMessages();
+        } else if (!data.ok) {
           input.value = text;
           console.error('Send failed:', data.error);
         }
-        // The message will appear via the next poll cycle (1.5s max delay)
-        // This ensures both users see it from the same source of truth.
-
       } catch (err) {
-        input.value = text;   // restore on error
+        input.value = text;
         console.error('Send error:', err);
       }
     }
 
-    // -------------------------------------------------------
-    // INPUT: auto-grow textarea + enable/disable send button
-    // -------------------------------------------------------
+    // ── Input helpers ────────────────────────────────────────
     function onInputChange() {
-      const input   = document.getElementById('msg-input');
-      const sendBtn = document.getElementById('send-btn');
-
-      // Auto-grow height
+      const input = document.getElementById('msg-input');
       input.style.height = 'auto';
-      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
-
-      // Enable send only when there's content
-      sendBtn.disabled = !input.value.trim();
+      input.style.height = Math.min(input.scrollHeight, 100) + 'px';
+      document.getElementById('send-btn').disabled = !input.value.trim() && !app.selectedImage;
+      onTypingInput();  // trigger typing indicator
     }
 
-    // -------------------------------------------------------
-    // INPUT: Enter key sends, Shift+Enter adds newline
-    // -------------------------------------------------------
     function onInputKeydown(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -911,14 +1407,24 @@
       }
     }
 
-    // -------------------------------------------------------
-    // UTILITY: Format a MySQL datetime string into HH:MM
-    // -------------------------------------------------------
-    function formatTime(datetimeStr) {
-      if (!datetimeStr) return '';
-      const d = new Date(datetimeStr.replace(' ', 'T')); // make it ISO for Safari
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    function escapeHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
     }
+
+    // ── Page visibility + unload ─────────────────────────────
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && app.roomCode) sendHeartbeat();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (app.roomCode && app.username) {
+        navigator.sendBeacon('heartbeat.php',
+          new Blob([JSON.stringify({ room_code: app.roomCode, username: app.username, leaving: true })],
+          { type: 'application/json' }));
+      }
+    });
   </script>
 </body>
 </html>
