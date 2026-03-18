@@ -1,0 +1,5 @@
+# PHP limits for compressed image uploads (~2MB after browser compression)
+php_value post_max_size 8M
+php_value upload_max_filesize 8M
+php_value memory_limit 32M
+php_value max_execution_time 30
