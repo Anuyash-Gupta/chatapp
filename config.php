@@ -3,10 +3,11 @@
 //  config.php  —  Database connection settings
 //  ⚠️  Change these values to match YOUR MySQL setup
 // =============================================================
-define('DB_HOST', 'sql311.infinityfree.com');  // usually localhost
-define('DB_USER', 'if0_41417023');     // your MySQL username
-define('DB_PASS', '     ');      // your MySQL password (often blank on XAMPP)
-define('DB_NAME', 'if0_41417023_CHAT');     // database name (must match schema.sql)
+
+define('DB_HOST', 'localhost');   // usually localhost
+define('DB_USER', 'root');        // your MySQL username
+define('DB_PASS', '');            // your MySQL password (often blank on XAMPP)
+define('DB_NAME', 'chatapp');     // database name (must match schema.sql)
 define('DB_PORT', 3306);          // default MySQL port
 
 /**
