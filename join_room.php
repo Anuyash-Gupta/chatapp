@@ -1,13 +1,8 @@
 <?php
 // =============================================================
-//  join_room.php
-//  Validates that a room code exists in the database.
-//  Called when a user enters a code to join someone's room.
-//
-//  Method : POST
-//  Body   : { "room_code": "AB3X9K" }
-//  Returns: JSON  { ok: true }
-//              or { ok: false, error: "Room not found" }
+//  join_room.php (v3)
+//  Checks room exists and counts only ACTIVE users (seen in
+//  last 15 seconds) — so a refreshed/closed tab frees the slot.
 // =============================================================
 
 header('Content-Type: application/json');
@@ -21,9 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once 'config.php';
 
-// -----------------------------------------------------------------
-// Read + validate input
-// -----------------------------------------------------------------
 $body      = json_decode(file_get_contents('php://input'), true);
 $room_code = strtoupper(trim($body['room_code'] ?? ''));
 
@@ -33,21 +25,33 @@ if (strlen($room_code) !== 6) {
     exit;
 }
 
-// -----------------------------------------------------------------
-// Check DB
-// -----------------------------------------------------------------
 try {
-    $pdo  = get_db();
+    $pdo = get_db();
+
+    // Check room exists
     $stmt = $pdo->prepare('SELECT COUNT(*) FROM rooms WHERE room_code = ?');
     $stmt->execute([$room_code]);
-    $found = (int) $stmt->fetchColumn();
-
-    if ($found === 0) {
+    if ((int) $stmt->fetchColumn() === 0) {
         http_response_code(404);
         echo json_encode(['ok' => false, 'error' => 'Room not found. Check the code and try again.']);
-    } else {
-        echo json_encode(['ok' => true]);
+        exit;
     }
+
+    // Count only ACTIVE users (heartbeat in last 15 seconds)
+    $stmt = $pdo->prepare(
+        'SELECT COUNT(*) FROM room_users
+         WHERE room_code = ? AND last_seen >= NOW() - INTERVAL 15 SECOND'
+    );
+    $stmt->execute([$room_code]);
+    $active = (int) $stmt->fetchColumn();
+
+    if ($active >= 2) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'error' => 'Room is full. Only 2 users allowed per room.']);
+        exit;
+    }
+
+    echo json_encode(['ok' => true]);
 
 } catch (PDOException $e) {
     http_response_code(500);
